@@ -54,4 +54,4 @@ python3 -m http.server 8124
 
 ## GitHub
 
-本项目由果汁哥维护，仓库地址会随本次上传同步更新。
+本项目由果汁哥维护：<https://github.com/Juicebro-star/wah-sign-game>
