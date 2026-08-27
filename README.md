@@ -6,6 +6,12 @@
 
 牌子上显示距离，右边是方向。点一下箭头，方向转一格，同时响一声“哇”。
 
+## 在线试玩
+
+[打开哇噻小游戏](https://wa.tan-xin.com/)
+
+![哇噻小游戏页面](assets/website-screenshot.png)
+
 ## 玩法
 
 - 点击距离数字，输入新的米数，最多 4 位数字。
@@ -46,7 +52,8 @@ python3 -m http.server 8124
 │   ├── juicebro-avatar.jpg
 │   ├── public-toilet-sign.png
 │   ├── public-toilet-sign-clean.png
-│   └── wah-sound.wav
+│   ├── wah-sound.wav
+│   └── website-screenshot.png
 ├── LICENSE
 └── README.md
 ```
@@ -54,6 +61,8 @@ python3 -m http.server 8124
 ## 素材说明
 
 `public-toilet-sign.png` 是页面使用的原始牌面图片；`public-toilet-sign-clean.png` 是为了让距离和箭头可以动态替换而准备的清理层；`wah-sound.wav` 是用户提供的录音中截取的约 2 秒音效片段；果汁哥头像是页面品牌素材。
+
+`website-screenshot.png` 是网页截图，用于项目展示和引流。
 
 代码和页面结构采用 MIT License，见 [LICENSE](LICENSE)。图片与品牌素材的使用范围以素材权利人的授权为准，MIT 不会自动扩大这些素材的授权范围。
 
