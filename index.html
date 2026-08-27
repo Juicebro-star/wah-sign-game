@@ -524,6 +524,10 @@
       box-shadow: 0 0 0 5px rgba(81,166,90,.12);
     }
 
+    .audio-source {
+      display: none;
+    }
+
     .reset-button {
       display: inline-flex;
       width: 100%;
@@ -763,6 +767,7 @@
 
   <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" aria-live="polite">哇，方向变了</div>
+  <audio class="audio-source" id="wahAudio" preload="auto" src="assets/wah-sound.wav" aria-hidden="true"></audio>
 
   <script>
     'use strict';
@@ -775,107 +780,34 @@
     const toast = document.getElementById('toast');
     const audioState = document.getElementById('audioState');
     const resetButton = document.getElementById('resetButton');
+    const wahAudio = document.getElementById('wahAudio');
 
     const directions = [180, 225, 270, 315, 0, 45, 90, 135];
     let directionIndex = 0;
     let count = 0;
-    let audioContext = null;
-    let masterGain = null;
     let toastTimer = 0;
 
-    function createAudio() {
-      if (audioContext) {
-        if (audioContext.state === 'suspended') audioContext.resume();
-        return audioContext;
-      }
-
-      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextCtor) {
-        audioState.textContent = '当前浏览器不支持 Web Audio';
-        return null;
-      }
-
-      audioContext = new AudioContextCtor();
-      masterGain = audioContext.createGain();
-      masterGain.gain.value = .7;
-      masterGain.connect(audioContext.destination);
-      audioContext.resume();
-      audioState.textContent = '声音开了 · 点一下，再响一声';
-      return audioContext;
-    }
-
-    function createNoiseBuffer(ctx, duration) {
-      const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < data.length; i += 1) {
-        const envelope = 1 - i / data.length;
-        data[i] = (Math.random() * 2 - 1) * envelope;
-      }
-      return buffer;
-    }
-
     function playWah() {
-      const ctx = createAudio();
-      if (!ctx || !masterGain) return;
-
-      const now = ctx.currentTime;
-      const duration = .64;
-      const voice = ctx.createGain();
-      voice.gain.setValueAtTime(.0001, now);
-      voice.gain.exponentialRampToValueAtTime(.9, now + .018);
-      voice.gain.exponentialRampToValueAtTime(.0001, now + duration);
-      voice.connect(masterGain);
-
-      const body = ctx.createOscillator();
-      body.type = 'sawtooth';
-      body.frequency.setValueAtTime(264, now);
-      body.frequency.exponentialRampToValueAtTime(180, now + duration);
-      const bodyGain = ctx.createGain();
-      bodyGain.gain.value = .16;
-      body.connect(bodyGain).connect(voice);
-
-      const warm = ctx.createOscillator();
-      warm.type = 'triangle';
-      warm.frequency.setValueAtTime(528, now);
-      warm.frequency.exponentialRampToValueAtTime(360, now + duration);
-      const warmGain = ctx.createGain();
-      warmGain.gain.value = .11;
-      warm.connect(warmGain).connect(voice);
-
-      const formant = ctx.createBiquadFilter();
-      formant.type = 'bandpass';
-      formant.frequency.setValueAtTime(780, now);
-      formant.frequency.exponentialRampToValueAtTime(420, now + duration);
-      formant.Q.value = 1.1;
-      voice.disconnect();
-      voice.connect(formant).connect(masterGain);
-
-      const upper = ctx.createBiquadFilter();
-      upper.type = 'peaking';
-      upper.frequency.value = 1650;
-      upper.Q.value = 1.15;
-      upper.gain.value = 7;
-      formant.disconnect();
-      formant.connect(upper).connect(masterGain);
-
-      const noise = ctx.createBufferSource();
-      noise.buffer = createNoiseBuffer(ctx, .13);
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = 'bandpass';
-      noiseFilter.frequency.value = 1200;
-      noiseFilter.Q.value = .7;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(.0001, now);
-      noiseGain.gain.exponentialRampToValueAtTime(.16, now + .008);
-      noiseGain.gain.exponentialRampToValueAtTime(.0001, now + .13);
-      noise.connect(noiseFilter).connect(noiseGain).connect(masterGain);
-
-      body.start(now);
-      warm.start(now);
-      noise.start(now);
-      body.stop(now + duration + .03);
-      warm.stop(now + duration + .03);
-      noise.stop(now + .14);
+      const playback = wahAudio.cloneNode(true);
+      playback.removeAttribute('id');
+      playback.classList.add('audio-source');
+      playback.volume = 1;
+      playback.currentTime = 0;
+      playback.addEventListener('ended', () => playback.remove(), { once: true });
+      playback.addEventListener('error', () => {
+        playback.remove();
+        audioState.textContent = '声音文件没加载成功';
+      }, { once: true });
+      document.body.appendChild(playback);
+      const playPromise = playback.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          audioState.textContent = '原声已开 · 点一下，响一遍';
+        }).catch(() => {
+          playback.remove();
+          audioState.textContent = '点一下后才会响';
+        });
+      }
     }
 
     function makeBurst() {
